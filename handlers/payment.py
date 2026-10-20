@@ -52,6 +52,7 @@ def admin_keyboard(request_id):
 
 
 @router.message(Command("pay"))
+@router.message(F.text == "💳 Bajaruvchi bo‘lish")
 async def start_payment(message: Message, state: FSMContext):
     if await is_worker_active(message.from_user.id):
         await message.answer("✅ Sizning bajaruvchi akkauntingiz faol.")
