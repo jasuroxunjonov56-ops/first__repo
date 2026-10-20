@@ -8,7 +8,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 
 from database import init_db
-from handlers import student, worker, admin
+from handlers import student, worker, admin, payment
 
 
 async def main():
@@ -24,11 +24,13 @@ async def main():
     dp.include_router(student.router)
     dp.include_router(worker.router)
     dp.include_router(admin.router)
+    dp.include_router(payment.router)
 
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="📝 Buyurtma berish")],
             [KeyboardButton(text="👷 Buyurtmalarni ko'rish")],
+            [KeyboardButton(text="💳 Bajaruvchi bo‘lish")],
             [KeyboardButton(text="🛡 Admin panel")],
         ],
         resize_keyboard=True,
@@ -37,7 +39,9 @@ async def main():
     @dp.message(CommandStart())
     async def start(message: Message):
         await message.answer(
-            "🎓 UniXizmat botiga xush kelibsiz!",
+            "🎓 UniXizmat botiga xush kelibsiz!\n\n"
+            "Buyurtma olish uchun «💳 Bajaruvchi bo‘lish» tugmasini bosing "
+            "yoki /pay buyrug‘idan foydalaning.",
             reply_markup=keyboard,
         )
 
