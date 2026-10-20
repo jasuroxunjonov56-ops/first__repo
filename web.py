@@ -1,4 +1,5 @@
-
+import asyncio
+from main import main as run_telegram_bot
 import os
 import json
 import time
