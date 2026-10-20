@@ -3,7 +3,7 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from database import get_open_orders, take_order
+from database import get_open_orders, take_order, is_worker_active
 from services.payments import calculate_payment
 
 router = Router()
@@ -20,6 +20,15 @@ async def show_orders(message: Message):
         )
         return
 
+    if not await is_worker_active(message.from_user.id):
+        await message.answer(
+            "🔒 Buyurtma olish uchun avval bajaruvchi sifatida "
+            "ro‘yxatdan o‘ting.\n\n"
+            "💳 «Bajaruvchi bo‘lish» tugmasini bosing yoki /pay yozing. "
+            "Admin to‘lovingizni tasdiqlagach, buyurtma olishingiz mumkin."
+        )
+        return
+
     for order in orders:
         payment = calculate_payment(order["price"])
 
@@ -33,9 +42,8 @@ async def show_orders(message: Message):
             f"📌 Buyurtma #{order['id']}\n"
             f"📝 {order['description']}\n"
             f"💰 Buyurtma narxi: {order['price']:,} so'm\n"
-            f"🏢 Platforma komissiyasi (15%): "
-            f"{payment['commission']:,} so'm\n"
-            f"👷 Ijrochiga qoladigan summa (85%): "
+            f"🏢 Platforma komissiyasi: {payment['commission']:,} so'm\n"
+            f"👷 Ijrochiga qoladigan summa: "
             f"{payment['worker_amount']:,} so'm",
             reply_markup=keyboard.as_markup(),
         )
@@ -43,6 +51,14 @@ async def show_orders(message: Message):
 
 @router.callback_query(F.data.startswith("take:"))
 async def take_order_handler(callback: CallbackQuery):
+    if not await is_worker_active(callback.from_user.id):
+        await callback.answer(
+            "Avval bajaruvchi sifatida ro‘yxatdan o‘ting va "
+            "to‘lov tasdiqlanishini kuting.",
+            show_alert=True,
+        )
+        return
+
     order_id = int(callback.data.split(":")[1])
 
     success = await take_order(
@@ -63,4 +79,3 @@ async def take_order_handler(callback: CallbackQuery):
             "Bu buyurtmani boshqa ijrochi olgan yoki u yopilgan.",
             show_alert=True,
         )
-
