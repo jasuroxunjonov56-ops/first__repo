@@ -92,26 +92,35 @@ async def is_worker_active(user_id):
         return row is not None and row[0] == 1
 
 
+
 async def create_payment_request(user_id, transaction_id, receipt_file_id):
     async with aiosqlite.connect(DB_NAME) as db:
-        try:
-            await db.execute("""
-                INSERT INTO payment_requests
-                (user_id, transaction_id, receipt_file_id)
-                VALUES (?, ?, ?)
-            """, (
-                user_id,
-                transaction_id.strip(),
-                receipt_file_id
-            ))
-            await db.execute("""
-                INSERT OR IGNORE INTO workers (user_id, active)
-                VALUES (?, 0)
-            """, (user_id,))
+        cursor = await db.execute(
+            """
+            INSERT OR IGNORE INTO payment_requests
+            (user_id, transaction_id, receipt_file_id)
+            VALUES (?, ?, ?)
+            """,
+            (user_id, transaction_id, receipt_file_id),
+        )
+
+        if cursor.rowcount == 0:
             await db.commit()
-            return True
-        except aiosqlite.IntegrityError:
-            return False
+            return None
+
+        request_id = cursor.lastrowid
+
+        await db.execute(
+            """
+            INSERT OR IGNORE INTO workers (user_id, active)
+            VALUES (?, 0)
+            """,
+            (user_id,),
+        )
+
+        await db.commit()
+        return request_id
+
 
 
 async def get_pending_payment_requests():
