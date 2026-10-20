@@ -27,7 +27,23 @@ app.mount(
     name="static"
 )
 
+bot_task = None
 
+
+@app.on_event("startup")
+async def start_telegram_bot():
+    global bot_task
+    bot_task = asyncio.create_task(run_telegram_bot())
+
+
+@app.on_event("shutdown")
+async def stop_telegram_bot():
+    if bot_task is not None:
+        bot_task.cancel()
+        try:
+            await bot_task
+        except asyncio.CancelledError:
+            pass
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse(
