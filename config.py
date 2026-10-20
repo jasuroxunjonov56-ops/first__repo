@@ -6,5 +6,6 @@ ADMIN_ID = int(os.getenv("ADMIN_ID", "8683399140"))
 
 DB_NAME = "unixizmat.db"
 
-ENTRY_FEE = 4000
-COMMISSION_PERCENT = 15
+ENTRY_FEE = int(os.getenv("ENTRY_FEE", "4000"))
+COMMISSION_PERCENT = int(os.getenv("COMMISSION_PERCENT", "10"))
+
