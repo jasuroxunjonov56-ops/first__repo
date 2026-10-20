@@ -90,6 +90,7 @@ async def get_transaction_id(message: Message, state: FSMContext):
     await message.answer("Endi to‘lov chekini rasm sifatida yuboring.")
 
 
+
 @router.message(PaymentStates.waiting_for_receipt, F.photo)
 async def get_receipt(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -100,20 +101,20 @@ async def get_receipt(message: Message, state: FSMContext):
         await message.answer("Jarayon boshidan boshlansin: /pay")
         return
 
-   request_id = await create_payment_request(
-    user_id=message.from_user.id,
-    transaction_id=transaction_id,
-    receipt_file_id=message.photo[-1].file_id,
-)
+    request_id = await create_payment_request(
+        user_id=message.from_user.id,
+        transaction_id=transaction_id,
+        receipt_file_id=message.photo[-1].file_id,
+    )
 
     await state.clear()
 
-   if request_id is None:
-    await message.answer(
-        "Bu tranzaksiya ID oldin yuborilgan. "
-        "Agar xato bo‘lsa, admin bilan bog‘laning."
-    )
-    return
+    if request_id is None:
+        await message.answer(
+            "Bu tranzaksiya ID oldin yuborilgan. "
+            "Agar xato bo‘lsa, admin bilan bog‘laning."
+        )
+        return
 
     await message.answer(
         "📨 To‘lov so‘rovingiz adminga yuborildi. "
@@ -132,7 +133,7 @@ async def get_receipt(message: Message, state: FSMContext):
         chat_id=ADMIN_ID,
         photo=message.photo[-1].file_id,
         caption=admin_text,
-        reply_markup=admin_keyboard(request_id)
+        reply_markup=admin_keyboard(request_id),
     )
 
 
