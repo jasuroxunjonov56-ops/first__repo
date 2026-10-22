@@ -10,6 +10,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 from database import add_order
+from handlers.constants import MENU_BUTTON_TEXTS
+from services.formatting import format_som
 
 router = Router()
 
@@ -28,7 +30,7 @@ async def start_order(message: Message, state: FSMContext):
     )
 
 
-@router.message(OrderForm.description)
+@router.message(OrderForm.description, ~F.text.in_(MENU_BUTTON_TEXTS))
 async def get_description(message: Message, state: FSMContext):
     description = (message.text or "").strip()
 
@@ -47,7 +49,7 @@ async def get_description(message: Message, state: FSMContext):
     )
 
 
-@router.message(OrderForm.price)
+@router.message(OrderForm.price, ~F.text.in_(MENU_BUTTON_TEXTS))
 async def get_price(message: Message, state: FSMContext):
     try:
         price = int((message.text or "").strip())
@@ -84,7 +86,7 @@ async def get_price(message: Message, state: FSMContext):
     await message.answer(
         f"✅ Buyurtma #{order_id} yaratildi!\n\n"
         f"📝 Ish: {data['description']}\n"
-        f"💰 Narx: {price:,} so'm\n\n"
+        f"💰 Narx: {format_som(price)}\n\n"
         "Buyurtma ijrochilar ro'yxatida ko'rinishi mumkin.",
         reply_markup=keyboard,
     )

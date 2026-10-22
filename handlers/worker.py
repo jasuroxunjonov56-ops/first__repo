@@ -1,16 +1,19 @@
 
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from database import get_open_orders, take_order, is_worker_active
 from services.payments import calculate_payment
+from services.formatting import format_som
 
 router = Router()
 
 
 @router.message(F.text == "👷 Buyurtmalarni ko'rish")
-async def show_orders(message: Message):
+async def show_orders(message: Message, state: FSMContext):
+    await state.clear()
     orders = await get_open_orders()
 
     if not orders:
@@ -41,10 +44,10 @@ async def show_orders(message: Message):
         await message.answer(
             f"📌 Buyurtma #{order['id']}\n"
             f"📝 {order['description']}\n"
-            f"💰 Buyurtma narxi: {order['price']:,} so'm\n"
-            f"🏢 Platforma komissiyasi: {payment['commission']:,} so'm\n"
+            f"💰 Buyurtma narxi: {format_som(order['price'])}\n"
+            f"🏢 Platforma komissiyasi: {format_som(payment['commission'])}\n"
             f"👷 Ijrochiga qoladigan summa: "
-            f"{payment['worker_amount']:,} so'm",
+            f"{format_som(payment['worker_amount'])}",
             reply_markup=keyboard.as_markup(),
         )
 

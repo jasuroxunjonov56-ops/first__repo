@@ -11,6 +11,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 from config import ADMIN_ID, ENTRY_FEE
+from handlers.constants import MENU_BUTTON_TEXTS
+from services.formatting import format_som
 from database import (
     create_payment_request,
     get_pending_payment_requests,
@@ -54,13 +56,14 @@ def admin_keyboard(request_id):
 @router.message(Command("pay"))
 @router.message(F.text == "💳 Bajaruvchi bo‘lish")
 async def start_payment(message: Message, state: FSMContext):
+    await state.clear()
     if await is_worker_active(message.from_user.id):
         await message.answer("✅ Sizning bajaruvchi akkauntingiz faol.")
         return
 
     await state.clear()
     await message.answer(
-        f"Bajaruvchi bo‘lish uchun kirish to‘lovi: {ENTRY_FEE} so‘m.\n\n"
+        f"Bajaruvchi bo‘lish uchun kirish to‘lovi: {format_som(ENTRY_FEE)}.\n\n"
         "To‘lovni karta egasi tasdiqlagan rekvizitlar bo‘yicha amalga oshiring. "
         "Keyin «Chek yuborish» tugmasini bosing.",
         reply_markup=payment_keyboard()
@@ -77,7 +80,7 @@ async def payment_start(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.message(PaymentStates.waiting_for_transaction_id)
+@router.message(PaymentStates.waiting_for_transaction_id, ~F.text.in_(MENU_BUTTON_TEXTS))
 async def get_transaction_id(message: Message, state: FSMContext):
     transaction_id = (message.text or "").strip()
 
@@ -125,7 +128,7 @@ async def get_receipt(message: Message, state: FSMContext):
         "💳 Yangi bajaruvchi to‘lov so‘rovi\n\n"
         f"👤 Telegram ID: {message.from_user.id}\n"
         f"🧾 Tranzaksiya ID: {transaction_id}\n"
-        f"💰 Kutilayotgan summa: {ENTRY_FEE} so‘m\n\n"
+        f"💰 Kutilayotgan summa: {format_som(ENTRY_FEE)}\n\n"
         "Tasdiqlashdan oldin bank hisobidagi haqiqiy tushumni tekshiring."
     )
 
@@ -137,7 +140,7 @@ async def get_receipt(message: Message, state: FSMContext):
     )
 
 
-@router.message(PaymentStates.waiting_for_receipt)
+@router.message(PaymentStates.waiting_for_receipt, ~F.text.in_(MENU_BUTTON_TEXTS))
 async def receipt_must_be_photo(message: Message):
     await message.answer("Iltimos, chekni rasm sifatida yuboring.")
 
@@ -205,7 +208,7 @@ async def pending_payments(message: Message):
         await message.answer(
             f"🧾 So‘rov ID: {request['id']}\n"
             f"👤 Foydalanuvchi: {request['user_id']}\n"
-            f"💰 Summa: {ENTRY_FEE} so‘m\n"
+            f"💰 Summa: {format_som(ENTRY_FEE)}\n"
             f"🧾 Tranzaksiya ID: {request['transaction_id']}",
             reply_markup=admin_keyboard(request["id"])
         )
