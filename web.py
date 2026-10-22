@@ -148,16 +148,16 @@ async def register_worker(body: RegisterBody):
     username = body.username.strip().lower()
     salt, digest = password_hash(body.password)
     link_token = secrets.token_urlsafe(28)
-async with db_connect() as db:
-    try:
-            cursor = await db.execute(
-                "INSERT INTO worker_accounts (username, salt, password_hash, link_token, active, created_at) VALUES (?, ?, ?, ?, 0, ?)",
-                (username, salt, digest, link_token, int(time.time())),
-            )
-            await db.commit()
-            account_id = cursor.lastrowid
-        except aiosqlite.IntegrityError:
-            raise HTTPException(status_code=409, detail="Bu login band. Boshqa login tanlang.")
+           async with db_connect() as db:
+            try:
+                cursor = await db.execute(
+                    "INSERT INTO worker_accounts (username, salt, password_hash, link_token, active, created_at) VALUES (?, ?, ?, ?, 0, ?)",
+                    (username, salt, digest, link_token, int(time.time())),
+                )
+                await db.commit()
+                account_id = cursor.lastrowid
+            except aiosqlite.IntegrityError:
+                raise HTTPException(status_code=409, detail="Bu login band. Boshqa login tanlang.")
     telegram_url = f"https://t.me/{bot_username}?start=link_{link_token}"
     return {"ok": True, "account_id": account_id, "link_token": link_token, "telegram_url": telegram_url, "fee": ENTRY_FEE,
             "message": "Login yaratildi. Telegram orqali bir martalik to‘lovni yuboring; admin tasdiqlagach akkaunt faollashadi."}
