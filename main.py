@@ -4,10 +4,10 @@ import logging
 import os
 
 from aiogram import Bot, Dispatcher
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, CommandObject
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 
-from database import init_db
+from database import init_db, link_worker_account
 from handlers import student, worker, admin, payment
 
 
@@ -37,11 +37,32 @@ async def main():
     )
 
     @dp.message(CommandStart())
-    async def start(message: Message):
+    async def start(message: Message, command: CommandObject):
+        args = command.args or ""
+        if args.startswith("link_"):
+            link_token = args[5:]
+            linked = await link_worker_account(link_token, message.from_user.id)
+            if not linked:
+                await message.answer(
+                    "⚠️ Ro‘yxatdan o‘tish havolasi topilmadi yoki eskirgan. "
+                    "Saytga qaytib, qaytadan ro‘yxatdan o‘ting.",
+                    reply_markup=keyboard,
+                )
+                return
+            await message.answer(
+                "🔗 Saytdagi login akkauntingiz Telegram bilan bog‘landi!\n\n"
+                "🔐 Sayt va botda bitta login/parol bilan foydalanasiz.\n"
+                "💳 Bajaruvchi akkauntini faollashtirish uchun bir martalik "
+                "to‘lovni amalga oshiring. To‘lovni «Bajaruvchi bo‘lish» tugmasidan boshlang.",
+                reply_markup=keyboard,
+            )
+            return
+
         await message.answer(
             "🎓 UniXizmat botiga xush kelibsiz!\n\n"
-            "Buyurtma olish uchun «💳 Bajaruvchi bo‘lish» tugmasini bosing "
-            "yoki /pay buyrug‘idan foydalaning.",
+            "Saytdagi login akkauntingizni Telegram bilan bog‘lang yoki "
+            "buyurtmalarni ko‘rish uchun menyudan foydalaning.\n"
+            "Buyurtma olish uchun «💳 Bajaruvchi bo‘lish» tugmasini bosing.",
             reply_markup=keyboard,
         )
 

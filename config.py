@@ -9,3 +9,6 @@ DB_NAME = "unixizmat.db"
 ENTRY_FEE = int(os.getenv("ENTRY_FEE", "4000"))
 COMMISSION_PERCENT = int(os.getenv("COMMISSION_PERCENT", "10"))
 
+
+PAYMENT_CARD_NUMBER = os.getenv("PAYMENT_CARD_NUMBER", "")
+PAYMENT_CARD_HOLDER = os.getenv("PAYMENT_CARD_HOLDER", "")
