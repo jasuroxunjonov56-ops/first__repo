@@ -149,7 +149,7 @@ async def register_worker(body: RegisterBody):
     salt, digest = password_hash(body.password)
     link_token = secrets.token_urlsafe(28)
     async with await db_connect() as db:
-        try:
+    try:
             cursor = await db.execute(
                 "INSERT INTO worker_accounts (username, salt, password_hash, link_token, active, created_at) VALUES (?, ?, ?, ?, 0, ?)",
                 (username, salt, digest, link_token, int(time.time())),
