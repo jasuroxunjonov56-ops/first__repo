@@ -1,19 +1,20 @@
 
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
-from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from database import get_open_orders, take_order, is_worker_active
+from database import get_open_orders, take_order, is_worker_active, get_order_details
 from services.payments import calculate_payment
-from services.formatting import format_som
 
 router = Router()
 
 
+def format_som(value):
+    return f"{int(value):,}".replace(",", " ") + " so‘m"
+
+
 @router.message(F.text == "👷 Buyurtmalarni ko'rish")
-async def show_orders(message: Message, state: FSMContext):
-    await state.clear()
+async def show_orders(message: Message):
     orders = await get_open_orders()
 
     if not orders:
@@ -73,9 +74,13 @@ async def take_order_handler(callback: CallbackQuery):
         await callback.answer("Buyurtma sizga biriktirildi! ✅")
         await callback.message.edit_reply_markup(reply_markup=None)
 
+        order = await get_order_details(order_id)
+        contact = (order or {}).get("contact")
+        contact_text = f"\n\n📞 Buyurtma beruvchi bilan aloqa: {contact}" if contact else ""
         await callback.message.answer(
             f"🎉 Siz #{order_id} buyurtmani oldingiz!\n\n"
-            "Talaba bilan topshirish muddatini kelishib oling."
+            "Topshirish muddatini buyurtma beruvchi bilan kelishib oling."
+            f"{contact_text}"
         )
     else:
         await callback.answer(

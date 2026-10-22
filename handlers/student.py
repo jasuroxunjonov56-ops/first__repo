@@ -10,10 +10,12 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 from database import add_order
-from handlers.constants import MENU_BUTTON_TEXTS
-from services.formatting import format_som
 
 router = Router()
+
+
+def format_som(value):
+    return f"{int(value):,}".replace(",", " ") + " so‘m"
 
 
 class OrderForm(StatesGroup):
@@ -30,7 +32,7 @@ async def start_order(message: Message, state: FSMContext):
     )
 
 
-@router.message(OrderForm.description, ~F.text.in_(MENU_BUTTON_TEXTS))
+@router.message(OrderForm.description)
 async def get_description(message: Message, state: FSMContext):
     description = (message.text or "").strip()
 
@@ -49,7 +51,7 @@ async def get_description(message: Message, state: FSMContext):
     )
 
 
-@router.message(OrderForm.price, ~F.text.in_(MENU_BUTTON_TEXTS))
+@router.message(OrderForm.price)
 async def get_price(message: Message, state: FSMContext):
     try:
         price = int((message.text or "").strip())

@@ -10,9 +10,7 @@ from aiogram.filters import Command
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
-from config import ADMIN_ID, ENTRY_FEE
-from handlers.constants import MENU_BUTTON_TEXTS
-from services.formatting import format_som
+from config import ADMIN_ID, ENTRY_FEE, PAYMENT_CARD_NUMBER, PAYMENT_CARD_HOLDER
 from database import (
     create_payment_request,
     get_pending_payment_requests,
@@ -22,6 +20,10 @@ from database import (
 )
 
 router = Router()
+
+
+def format_som(value):
+    return f"{int(value):,}".replace(",", " ") + " so‘m"
 
 
 class PaymentStates(StatesGroup):
@@ -56,16 +58,18 @@ def admin_keyboard(request_id):
 @router.message(Command("pay"))
 @router.message(F.text == "💳 Bajaruvchi bo‘lish")
 async def start_payment(message: Message, state: FSMContext):
-    await state.clear()
     if await is_worker_active(message.from_user.id):
         await message.answer("✅ Sizning bajaruvchi akkauntingiz faol.")
         return
 
     await state.clear()
+    card_line = f"\n💳 Karta: {PAYMENT_CARD_NUMBER}" if PAYMENT_CARD_NUMBER else "\n💳 Karta raqami admin tomonidan sozlanmagan. Admin bilan bog‘laning."
+    holder_line = f"\n👤 Karta egasi: {PAYMENT_CARD_HOLDER}" if PAYMENT_CARD_HOLDER else ""
     await message.answer(
-        f"Bajaruvchi bo‘lish uchun kirish to‘lovi: {format_som(ENTRY_FEE)}.\n\n"
-        "To‘lovni karta egasi tasdiqlagan rekvizitlar bo‘yicha amalga oshiring. "
-        "Keyin «Chek yuborish» tugmasini bosing.",
+        f"Bajaruvchi bo‘lish uchun bir martalik to‘lov: {format_som(ENTRY_FEE)}.\n"
+        f"{card_line}{holder_line}\n\n"
+        "To‘lovni faqat Telegram botidagi ushbu ko‘rsatma orqali amalga oshiring. "
+        "So‘ng «Chek yuborish» tugmasini bosing. Admin haqiqiy tushumni tekshirib tasdiqlaydi.",
         reply_markup=payment_keyboard()
     )
 
@@ -80,7 +84,7 @@ async def payment_start(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.message(PaymentStates.waiting_for_transaction_id, ~F.text.in_(MENU_BUTTON_TEXTS))
+@router.message(PaymentStates.waiting_for_transaction_id)
 async def get_transaction_id(message: Message, state: FSMContext):
     transaction_id = (message.text or "").strip()
 
@@ -140,7 +144,7 @@ async def get_receipt(message: Message, state: FSMContext):
     )
 
 
-@router.message(PaymentStates.waiting_for_receipt, ~F.text.in_(MENU_BUTTON_TEXTS))
+@router.message(PaymentStates.waiting_for_receipt)
 async def receipt_must_be_photo(message: Message):
     await message.answer("Iltimos, chekni rasm sifatida yuboring.")
 

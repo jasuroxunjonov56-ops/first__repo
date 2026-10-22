@@ -1,18 +1,19 @@
 
 from aiogram import Router, F
 from aiogram.types import Message
-from aiogram.fsm.context import FSMContext
 
 from config import ADMIN_ID
 from database import get_all_orders
-from services.formatting import format_som
 
 router = Router()
 
 
+def format_som(value):
+    return f"{int(value):,}".replace(",", " ") + " so‘m"
+
+
 @router.message(F.text == "🛡 Admin panel")
-async def admin_panel(message: Message, state: FSMContext):
-    await state.clear()
+async def admin_panel(message: Message):
     # Admin ID sozlanmagan yoki foydalanuvchi admin bo'lmasa
     if ADMIN_ID == 0 or message.from_user.id != ADMIN_ID:
         await message.answer(
